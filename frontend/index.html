@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Photo Gallery</title>
+  <!-- Tailwind CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50 min-h-screen transition-colors duration-300" id="bodyRoot">
+  <!-- Header -->
+  <header class="bg-blue-600 sticky top-0 z-40 shadow-md mb-8 transition-colors duration-300" id="headerRoot">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-xl md:text-3xl font-bold text-white tracking-wide flex items-center gap-2">
+        <i class="fa-solid fa-images"></i> Gallery
+      </h1>
+      <div class="flex items-center gap-2 md:gap-4">
+        <button id="darkModeToggle" class="bg-gray-200 text-gray-700 font-semibold px-3 py-2 rounded shadow hover:bg-gray-300 transition flex items-center gap-2" title="Toggle dark mode">
+          <i class="fa fa-moon"></i>
+        </button>
+        <button id="openModalBtn" class="bg-white text-blue-600 font-semibold px-4 py-2 rounded shadow hover:bg-blue-50 transition flex items-center gap-2 hidden" title="Upload Photo">
+          <i class="fa fa-upload"></i> <span class="hidden sm:inline">Upload</span>
+        </button>
+        <!-- User Dropdown -->
+        <div class="relative" id="userDropdownWrapper">
+          <button id="userDropdownBtn" class="flex items-center gap-2 bg-blue-800 text-white font-semibold px-3 py-2 rounded shadow hover:bg-blue-900 transition focus:outline-none" aria-haspopup="true" aria-expanded="false">
+            <span id="usernameDisplay" class="font-semibold"></span>
+            <i class="fa fa-user-circle text-xl"></i>
+            <i class="fa fa-chevron-down text-xs ml-1"></i>
+          </button>
+          <div id="userDropdownMenu" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded shadow-lg py-2 hidden z-50">
+            <button id="accountBtn" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
+              <i class="fa fa-user-cog"></i> Account Settings
+            </button>
+            <button id="logoutBtn" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
+              <i class="fa fa-sign-out-alt"></i> Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast notifications -->
+  <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-2"></div>
+
+  <!-- Account Settings Modal -->
+  <div id="accountModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 w-full max-w-sm animate-fade-in-up transition-colors duration-300">
+      <button id="closeAccountModalBtn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl font-bold focus:outline-none" title="Close">&times;</button>
+      <h2 class="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-100"><i class="fa fa-user-cog"></i> Account Settings</h2>
+      <div class="mb-4">
+        <div class="mb-2 text-gray-700 dark:text-gray-200"><strong>Username:</strong></div>
+        <div id="accountUsername" class="bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 font-mono text-gray-800 dark:text-gray-100"></div>
+      </div>
+      <div class="mb-4 flex items-center gap-2">
+        <span class="hidden text-gray-700 dark:text-gray-200">Dark Mode</span>
+        <!-- Dark mode toggle removed from account modal for clarity -->
+      </div>
+      <button id="accountLogoutBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded transition mt-4"><i class="fa fa-sign-out-alt"></i> Logout</button>
+      <form id="changePasswordForm" class="mt-6 space-y-3">
+        <div class="text-gray-700 dark:text-gray-200 font-semibold mb-2">Change Password</div>
+        <input type="password" id="currentPassword" class="border rounded w-full p-2 dark:bg-gray-800 dark:text-gray-100" placeholder="Current password" required>
+        <input type="password" id="newPassword" class="border rounded w-full p-2 dark:bg-gray-800 dark:text-gray-100" placeholder="New password" required>
+        <input type="password" id="confirmNewPassword" class="border rounded w-full p-2 dark:bg-gray-800 dark:text-gray-100" placeholder="Confirm new password" required>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition">Change Password</button>
+      </form>
+      <!-- Optional: Change password UI can go here -->
+    </div>
+  </div>
+
+  <!-- Login/Register Modal -->
+  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div class="relative bg-white rounded-xl shadow-lg p-6 w-full max-w-sm animate-fade-in-up">
+      <h2 id="authTitle" class="text-xl font-semibold mb-4 flex items-center gap-2"><i class="fa fa-user"></i> Login</h2>
+      <form id="authForm" class="space-y-4">
+        <div>
+          <label for="authUsername" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <input type="text" id="authUsername" class="border rounded w-full p-2 focus:ring-2 focus:ring-blue-400" required autocomplete="username">
+        </div>
+        <div>
+          <label for="authPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input type="password" id="authPassword" class="border rounded w-full p-2 focus:ring-2 focus:ring-blue-400" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition">Login</button>
+      </form>
+      <p class="text-sm text-gray-500 mt-4 text-center">
+        <span id="toggleAuthMode">Don't have an account? <button class="text-blue-600 hover:underline" id="switchToRegister">Register</button></span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal for Add/Edit Form -->
+  <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-40 hidden">
+    <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 w-full max-w-xl animate-fade-in-up transition-colors duration-300">
+      <button id="closeModalBtn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl font-bold focus:outline-none" title="Close">
+        &times;
+      </button>
+      <h2 class="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-100"><i class="fa-solid fa-plus"></i> Add / Edit Photo</h2>
+      <form id="photoForm" enctype="multipart/form-data" class="space-y-4">
+        <input type="hidden" id="photoId">
+        <div>
+          <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Title <span class="text-red-500">*</span></label>
+          <input type="text" id="title" class="border rounded w-full p-2 focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-gray-100" placeholder="Photo title" required>
+        </div>
+        <div>
+          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Description</label>
+          <input type="text" id="description" class="border rounded w-full p-2 focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-gray-100" placeholder="Photo description">
+        </div>
+        <div>
+          <label for="imageUrl" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Image URL</label>
+          <input type="text" id="imageUrl" class="border rounded w-full p-2 focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-gray-100" placeholder="Paste image URL or choose a file below">
+        </div>
+        <div>
+          <label for="imageFile" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Or Upload Image</label>
+          <input type="file" id="imageFile" accept="image/*" class="border rounded w-full p-2 dark:bg-gray-800 dark:text-gray-100">
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition">Add Photo</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Image Preview Modal -->
+  <div id="imagePreviewModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+    <div class="relative max-w-3xl w-full flex flex-col items-center animate-fade-in-up">
+      <button id="closeImagePreviewBtn" class="absolute top-3 right-3 text-gray-500 text-3xl font-bold focus:outline-none" title="Close">&times;</button>
+      <img id="previewImage" src="" alt="Preview" class="rounded-lg shadow-lg max-h-[80vh] w-auto object-contain border-4 border-white" />
+      <div id="previewTitle" class="mt-4 text-white text-lg font-semibold"></div>
+      <div id="previewDescription" class="text-white text-sm mt-1"></div>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4">
+    <!-- Gallery Grid -->
+    <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html> 
